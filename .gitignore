@@ -1,0 +1,59 @@
+# Exclude TypeScript build output
+dist/
+*.tsbuildinfo
+
+# Exclude Node.js dependency directories
+node_modules/
+
+# Exclude logs and temporary files
+logs/
+*.log
+*.pid
+*.seed
+*.pid.lock
+
+# Exclude editor metadata
+.idea/
+*.swp
+*.swo
+
+# Exclude Visual Studio Code metadata
+.vscode/*
+!.vscode/tasks.json
+!.vscode/settings.template.json
+!.vscode/launch.template.json
+!.vscode/extensions.json
+
+# Exclude macOS and Windows metadata
+.DS_Store
+Thumbs.db
+
+# Exclude coverage reports
+coverage/
+*.lcov
+
+# Exclude optional npm cache directory
+.npm
+
+# Exclude optional eslint and stylelint caches
+.eslintcache
+.stylelintcache
+
+# Exclude microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Exclude optional REPL history
+.node_repl_history
+
+# Exclude output of 'npm pack'
+*.tgz
+
+# Exclude yarn integrity file
+.yarn-integrity
+
+# Exclude dotenv environment variable files
+.env
+.env.*

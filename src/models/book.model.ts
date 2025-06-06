@@ -1,8 +1,8 @@
-import { bookType, itemBorrower } from "../types/enums/book.enum";
-import { book, issuedToStructure } from "../types/book.type";
+import { bookType, itemBorrower } from "../types/enums/book.enum.js";
+import { book, issuedToStructure } from "../types/book.type.js";
 import mongoose, { model, Schema } from "mongoose";
 
-const issuedTo = new Schema<issuedToStructure>({
+const issuedTo = new Schema<issuedToStructure>({  // this is seperate schema of issuedTo
   bookBorrower: {
     type: String,
     required: true,
@@ -84,11 +84,11 @@ const BookSchema = new Schema<book>(
       default: 0,
     },
     issuedToInfo: {
-      type: [issuedTo],
+      type: [issuedTo], // here we use this schema as array of object 
     },
     isAvailable: {
       type: Boolean,
-      default: function () {
+      default: function () { // this is function that run automatic when new data is created
         return this.availableCopies > 0;
       },
     },

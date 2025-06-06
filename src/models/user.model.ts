@@ -1,6 +1,6 @@
 import mongoose, { model, Schema } from "mongoose";
-import { userType } from "../types/user.type";
-import { userRole } from "../types/enums/user.enum";
+import { userType } from "../types/user.type.js";
+import { userRole } from "../types/enums/user.enum.js";
 const userSchema = new Schema<userType>(
   {
     name: {
@@ -34,13 +34,13 @@ const userSchema = new Schema<userType>(
       type: String,
       enum: Object.values(userRole),
     },
-    issuedBook: [
+    issuedBook: [ // we put here user id in array so that we can track users
       {
         _id: String,
         date: Date,
       },
     ],
-    returnedBook: [
+    returnedBook: [ // same as above
       {
         _id: String,
         date: Date,

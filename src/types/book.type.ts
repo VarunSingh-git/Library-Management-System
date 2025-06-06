@@ -1,4 +1,4 @@
-import { bookType, itemBorrower } from "../types/enums/book.enum";
+import { bookType, itemBorrower } from "../types/enums/book.enum.js";
 import { Types } from "mongoose";
 
 export interface book {

@@ -17,4 +17,5 @@ export interface userType {
     _id: String;
     date: Date;
   }>;
+  refreshToken: string;
 }

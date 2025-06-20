@@ -1,6 +1,8 @@
 import { itemBorrower } from "../types/enums/book.enum.js";
 import { issuedToStructure } from "../types/book.type.js";
 import mongoose, { model, Schema } from "mongoose";
+import { User } from "./user.model.js";
+import { returnedBook } from "./bookReturn.model.js";
 
 const issuedToSchema = new Schema<issuedToStructure>(
   {
@@ -22,16 +24,32 @@ const issuedToSchema = new Schema<issuedToStructure>(
     },
     issueDate: {
       type: Date,
+      default: Date.now(),
       required: true,
     },
     returnDate: {
       type: Date,
+      default: Date.now(),
       required: true,
     },
+    fine: [
+      {
+        fine: Number,
+        bookId: { type: mongoose.Types.ObjectId, ref: "Book" },
+        userId: { type: mongoose.Types.ObjectId, ref: "User" },
+      },
+    ],
   },
   {
     timestamps: true,
   }
 );
+
+issuedToSchema.pre("save", async function (next) {
+  if (this.fine[0] && this.fine.length > 0) {
+    return next(new Error("Outstanding fine exists. Cannot issue new book."));
+  }
+  next();
+});
 
 export const issuedBook = model("issueBook", issuedToSchema);

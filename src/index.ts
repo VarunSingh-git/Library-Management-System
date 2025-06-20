@@ -5,7 +5,12 @@ import express from "express";
 dotenv.config({
   path: "/env",
 });
+import cookieParser from "cookie-parser";
 const app = express();
+app.use(cookieParser());
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
 const startServer = async () => {
   await connectDB()
     .then(() => {

@@ -1,6 +1,6 @@
 import { bookType, itemBorrower } from "../types/enums/book.enum.js";
 import { book } from "../types/book.type.js";
-import mongoose, { model, Schema } from "mongoose";
+import mongoose, { model, models, Schema } from "mongoose";
 import { issuedBook } from "./bookIssue.model.js";
 import { returnedBook } from "./bookReturn.model.js";
 
@@ -79,4 +79,4 @@ const AddBookSchema = new Schema<book>(
     timestamps: true,
   }
 );
-export const Book = model("Book", AddBookSchema);
+export const Book = models?.Book || model("Book", AddBookSchema);

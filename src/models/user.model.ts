@@ -1,4 +1,4 @@
-import mongoose, { model, Schema } from "mongoose";
+import mongoose, { models, model, Schema } from "mongoose";
 import { userType } from "../types/user.type.js";
 import { userRole } from "../types/enums/user.enum.js";
 import bcryptjs from "bcryptjs";
@@ -37,6 +37,11 @@ const userSchema = new Schema<userType>(
       type: String,
       enum: Object.values(userRole),
     },
+    bookIssueLimit: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
     issuedBook: [
       // we put here user id in array so that we can track users
       {
@@ -54,12 +59,18 @@ const userSchema = new Schema<userType>(
     refreshToken: {
       type: String,
     },
+    fine: [
+      {
+        fine: Number,
+        bookId: mongoose.Types.ObjectId,
+        ref: "Book",
+      },
+    ],
   },
   {
     timestamps: true,
   }
 );
-
 
 userSchema.pre("save", async function (next) {
   // this is middleware for encrypt password
@@ -68,9 +79,10 @@ userSchema.pre("save", async function (next) {
   }
 });
 
-
 userSchema.methods.issPswrdCorrect = async function (pswrd: string) {
   return await bcryptjs.compare(pswrd, this.pswrd);
 };
 
-export const User = model("User", userSchema);
+userSchema.methods.generateRefreshToken
+
+export const User = models?.User || model("User", userSchema);

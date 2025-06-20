@@ -1,4 +1,5 @@
 import { userRole } from "../types/enums/user.enum.js";
+import mongoose from "mongoose";
 
 export interface userType {
   name: string;
@@ -18,4 +19,6 @@ export interface userType {
     date: Date;
   }>;
   refreshToken: string;
+  bookIssueLimit: number;
+  fine: Array<{ fine: number; BookId: mongoose.Types.ObjectId; ref: string }>;
 }

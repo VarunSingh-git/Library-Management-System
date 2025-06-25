@@ -1,15 +1,16 @@
 import { Mongoose } from "mongoose";
 import dotenv from "dotenv";
+import { app } from "./app.js";
 import connectDB from "./config/db/index.db.js";
 import express from "express";
 dotenv.config({
-  path: "/env",
+  path: "/.env",
 });
-import cookieParser from "cookie-parser";
-const app = express();
-app.use(cookieParser());
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+// import cookieParser from "cookie-parser";
+// const app = express();
+// app.use(cookieParser());
+// app.use(express.json());
+// app.use(express.urlencoded({ extended: false }));
 
 const startServer = async () => {
   await connectDB()

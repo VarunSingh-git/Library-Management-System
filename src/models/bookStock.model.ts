@@ -1,8 +1,9 @@
 import { bookType, itemBorrower } from "../types/enums/book.enum.js";
 import { book } from "../types/book.type.js";
-import mongoose, { model, models, Schema } from "mongoose";
-import { issuedBook } from "./bookIssue.model.js";
-import { returnedBook } from "./bookReturn.model.js";
+import mongoose from "mongoose";
+import { Schema } from "mongoose";
+import { model } from "mongoose";
+import { IssuedBook } from "./bookIssue.model.js";
 
 const AddBookSchema = new Schema<book>(
   {
@@ -65,7 +66,7 @@ const AddBookSchema = new Schema<book>(
       required: true,
     },
     issuedToInfo: {
-      type: [issuedBook], // here we use this schema as array of object
+      type: [IssuedBook], // here we use this schema as array of object
     },
     isAvailable: {
       type: Boolean,
@@ -79,4 +80,4 @@ const AddBookSchema = new Schema<book>(
     timestamps: true,
   }
 );
-export const Book = models?.Book || model("Book", AddBookSchema);
+export const Book = model("Book", AddBookSchema);

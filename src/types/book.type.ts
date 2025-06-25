@@ -1,5 +1,5 @@
 import { bookType, itemBorrower } from "../types/enums/book.enum.js";
-import mongoose, { Types } from "mongoose";
+import mongoose from "mongoose";
 
 export interface book {
   title: string;
@@ -20,13 +20,12 @@ export interface book {
 
 export interface issuedToStructure {
   bookBorrower: itemBorrower;
-  bookId: Types.ObjectId;
-  userId: Types.ObjectId;
+  bookId: mongoose.Schema.Types.ObjectId;
+  userId: mongoose.Schema.Types.ObjectId;
   fine: Array<{
     fine: number;
-    BookId: mongoose.Types.ObjectId;
-    userId: mongoose.Types.ObjectId;
-    ref: string;
+    bookId: { type: mongoose.Types.ObjectId; ref: string };
+    userId: { type: mongoose.Types.ObjectId; ref: string };
   }>;
   ref: string;
   issueDate: Date;
@@ -35,8 +34,8 @@ export interface issuedToStructure {
 
 export interface returnedToStructure {
   bookBorrower: itemBorrower;
-  bookId: Types.ObjectId;
-  userId: Types.ObjectId;
+  bookId: { type: mongoose.Types.ObjectId; ref: string };
+  userId: { type: mongoose.Types.ObjectId; ref: string };
   ref: string;
   issueDate: Date;
   returnDate: Date;

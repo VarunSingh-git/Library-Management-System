@@ -1,7 +1,11 @@
-import mongoose, { models, model, Schema } from "mongoose";
+import mongoose from "mongoose";
+// import { models } from "mongoose";
+import { model } from "mongoose";
+import { Schema } from "mongoose";
 import { userType } from "../types/user.type.js";
 import { userRole } from "../types/enums/user.enum.js";
 import bcryptjs from "bcryptjs";
+import jwt, { SignOptions } from "jsonwebtoken";
 
 const userSchema = new Schema<userType>(
   {
@@ -28,6 +32,7 @@ const userSchema = new Schema<userType>(
     },
     phoneNo: {
       type: Number,
+      required: true,
     },
     pswrd: {
       type: String,
@@ -36,6 +41,7 @@ const userSchema = new Schema<userType>(
     role: {
       type: String,
       enum: Object.values(userRole),
+      required: true,
     },
     bookIssueLimit: {
       type: Number,
@@ -62,8 +68,8 @@ const userSchema = new Schema<userType>(
     fine: [
       {
         fine: Number,
-        bookId: mongoose.Types.ObjectId,
-        ref: "Book",
+        bookId: { type: mongoose.Types.ObjectId, ref: "Book" },
+        userId: { type: mongoose.Types.ObjectId, ref: "User" },
       },
     ],
   },
@@ -83,6 +89,38 @@ userSchema.methods.issPswrdCorrect = async function (pswrd: string) {
   return await bcryptjs.compare(pswrd, this.pswrd);
 };
 
-userSchema.methods.generateRefreshToken
+userSchema.methods.generateAccessToken = function (): string {
+  const secret = process.env.ACCESS_TOKEN_KEY;
+  const expiresIn = process.env.ACCESS_TOKEN_EXPIRE;
+  if (!secret || !expiresIn) throw new Error("JWT Error...!");
 
-export const User = models?.User || model("User", userSchema);
+  const payload = {
+    _id: this._id,
+    name: this.name,
+    rollNo: this.rollNo,
+    phone: this.phoneNo,
+  };
+  const options: SignOptions = {
+    expiresIn: "1h",
+    algorithm: "HS256",
+  };
+
+  return jwt.sign(payload, secret, options);
+};
+userSchema.methods.generateRefreshToken = function (): string {
+  const secret = process.env.REFRESH_TOKEN_KEY!;
+  const expiresIn = process.env.REFRESH_TOKEN_EXPIRE;
+  if (!secret || !expiresIn) throw new Error("JWT Error...!");
+
+  const payload = {
+    _id: this._id,
+  };
+  const options: SignOptions = {
+    expiresIn: "30d",
+    algorithm: "HS256",
+  };
+
+  return jwt.sign(payload, secret, options);
+};
+
+export const User = model("User", userSchema);

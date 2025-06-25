@@ -11,12 +11,12 @@ const returnBookSchema = new Schema<returnedToStructure>(
       enum: Object.values(itemBorrower),
     },
     bookId: {
-      type: Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: "Book",
       required: true,
     },
     userId: {
-      type: Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
@@ -34,4 +34,4 @@ const returnBookSchema = new Schema<returnedToStructure>(
   }
 );
 
-export const returnedBook = model("returnBook", returnBookSchema);
+export const ReturnedBook = model("ReturnBook", returnBookSchema);

@@ -1,8 +1,8 @@
 import { itemBorrower } from "../types/enums/book.enum.js";
 import { issuedToStructure } from "../types/book.type.js";
-import mongoose, { model, Schema } from "mongoose";
+import mongoose from "mongoose";
+import { model, Schema } from "mongoose";
 import { User } from "./user.model.js";
-import { returnedBook } from "./bookReturn.model.js";
 
 const issuedToSchema = new Schema<issuedToStructure>(
   {
@@ -52,4 +52,4 @@ issuedToSchema.pre("save", async function (next) {
   next();
 });
 
-export const issuedBook = model("issueBook", issuedToSchema);
+export const IssuedBook = mongoose.model("IssueBook", issuedToSchema);

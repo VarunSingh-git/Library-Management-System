@@ -20,5 +20,20 @@ export interface userType {
   }>;
   refreshToken: string;
   bookIssueLimit: number;
-  fine: Array<{ fine: number; BookId: mongoose.Types.ObjectId; ref: string }>;
+  fine: Array<{
+    fine: number;
+    bookId: { type: mongoose.Types.ObjectId; ref: string };
+    userId: { type: mongoose.Types.ObjectId; ref: string };
+  }>;
+}
+
+export interface RegisterUserInput {
+  name: string;
+  photo: string;
+  department: string;
+  pswrd: string;
+  rollNo?: string;
+  year?: string;
+  phoneNo: number;
+  role: string;
 }

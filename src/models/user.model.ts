@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-// import { models } from "mongoose";
 import { model } from "mongoose";
 import { Schema } from "mongoose";
 import { userType } from "../types/user.type.js";
@@ -81,11 +80,12 @@ const userSchema = new Schema<userType>(
 userSchema.pre("save", async function (next) {
   // this is middleware for encrypt password
   if (this.isModified("pswrd")) {
-    await bcryptjs.hash(this.pswrd, 10);
+    this.pswrd = await bcryptjs.hash(this.pswrd, 10);
+    next();
   }
 });
 
-userSchema.methods.issPswrdCorrect = async function (pswrd: string) {
+userSchema.methods.isPswrdCorrect = async function (pswrd: string) {
   return await bcryptjs.compare(pswrd, this.pswrd);
 };
 
@@ -97,8 +97,8 @@ userSchema.methods.generateAccessToken = function (): string {
   const payload = {
     _id: this._id,
     name: this.name,
-    rollNo: this.rollNo,
     phone: this.phoneNo,
+    role: this.role,
   };
   const options: SignOptions = {
     expiresIn: "1h",
@@ -109,7 +109,7 @@ userSchema.methods.generateAccessToken = function (): string {
 };
 userSchema.methods.generateRefreshToken = function (): string {
   const secret = process.env.REFRESH_TOKEN_KEY!;
-  const expiresIn = process.env.REFRESH_TOKEN_EXPIRE;
+  const expiresIn = process.env.REFRESH_TOKEN_EXPIRE!;
   if (!secret || !expiresIn) throw new Error("JWT Error...!");
 
   const payload = {

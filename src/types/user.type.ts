@@ -25,7 +25,11 @@ export interface userType {
     bookId: { type: mongoose.Types.ObjectId; ref: string };
     userId: { type: mongoose.Types.ObjectId; ref: string };
   }>;
+  generateAccessToken(): string;
+  generateRefreshToken(): string;
+  isPswrdCorrect(pswrd: string): Promise<boolean>;
 }
+
 
 export interface RegisterUserInput {
   name: string;

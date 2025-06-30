@@ -3,25 +3,8 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { User } from "../models/user.model.js";
 import { RegisterUserInput } from "../types/user.type.js";
 import { uploadToCloudinary } from "../utils/cloudinary.js";
+import jwt from "jsonwebtoken";
 
-// const generateAccessAndRefreshToken = async (userId: string) => {
-//   try {
-//     const user = await User.findById(userId);
-//     if (!user) throw new Error("User not found");
-//     const accessToken = await user?.generateAccessToken();
-//     const refreshToken = await user?.generateRefreshToken();
-//     // user.refreshToken = refreshToken;
-//     await user.save({
-//       validateBeforeSave: false,
-//     });
-//     return {
-//       accessToken,
-//       refreshToken,
-//     };
-//   } catch (error) {
-//     throw new Error("Error in generateAccessAndRefreshToken");
-//   }
-// };
 const registration = asyncHandler(async (req, res) => {
   const { name, department, phoneNo, pswrd, role }: RegisterUserInput =
     req.body;
@@ -114,13 +97,11 @@ const logIn = asyncHandler(async (req, res) => {
     .cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: true,
-      sameSite: "strict",
       maxAge: 15 * 60 * 1000,
     })
     .cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: true,
-      sameSite: "strict",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     })
     .json({
@@ -128,4 +109,39 @@ const logIn = asyncHandler(async (req, res) => {
       user: logginUser,
     });
 });
-export { registration, logIn };
+
+const logOut = asyncHandler(async (req, res) => {
+  console.log("req.user?._id", req.user?._id);
+  const result = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $unset: {
+        refreshToken: 1,
+      },
+    },
+    {
+      new: true,
+    }
+  );
+  console.log("result", result);
+  return res
+    .status(201)
+    .cookie("accessToken", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+      maxAge: 15 * 60 * 1000,
+    })
+    .cookie("refreshToken", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    })
+    .json({
+      msg: "Log out Successfully",
+      user: {},
+    });
+});
+
+export { registration, logIn, logOut };

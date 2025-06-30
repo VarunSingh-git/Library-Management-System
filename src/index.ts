@@ -6,6 +6,8 @@ import express from "express";
 dotenv.config({
   path: "/.env",
 });
+import type {} from "./types/index.d.ts";
+
 const startServer = async () => {
   await connectDB()
     .then(() => {

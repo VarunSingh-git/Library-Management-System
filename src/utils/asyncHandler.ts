@@ -5,7 +5,9 @@ function asyncHandler<T>(
 ): RequestHandler {
   // RequestHandler is a type that define structure of a function
   return (req, res, next) => {
-    Promise.resolve(reqHandler(req, res, next)).catch((err) => next(err));
+    Promise.resolve(reqHandler(req, res, next)).catch((err) =>
+      next(new Error(err))
+    );
   };
 }
 

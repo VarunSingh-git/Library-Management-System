@@ -6,4 +6,5 @@ export interface JWT_Payload {
   _id: string;
   name: string;
   phoneNo: number;
+  role: string;
 }

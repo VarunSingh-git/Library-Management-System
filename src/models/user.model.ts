@@ -90,8 +90,8 @@ userSchema.methods.isPswrdCorrect = async function (pswrd: string) {
 };
 
 userSchema.methods.generateAccessToken = function (): string {
-  const secret = process.env.ACCESS_TOKEN_KEY;
-  const expiresIn = process.env.ACCESS_TOKEN_EXPIRE;
+  const secret = process.env.ACCESS_TOKEN_KEY!;
+  const expiresIn = process.env.ACCESS_TOKEN_EXPIRE!;
   if (!secret || !expiresIn) throw new Error("JWT Error...!");
 
   const payload = {

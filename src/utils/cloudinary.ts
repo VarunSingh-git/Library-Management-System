@@ -12,20 +12,21 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET!,
 });
 
+
+// export const publicId=async()
 export const uploadToCloudinary = async (fileBuffer: Buffer) => {
   return new Promise((resolve, reject) => {
-    streamifier.createReadStream(fileBuffer).pipe(
-      cloudinary.uploader.upload_stream(
-        {
-          folder: "Lib_Mgmt",
-          resource_type: "image",
-        },
-        (err, result) => {
-          if (err || !result) return reject(err);
-          resolve(result.secure_url);
-        }
-      )
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: "Lib_Mgmt",
+        resource_type: "image",
+      },
+      (err, result) => {
+        if (err || !result) return reject(err);
+        resolve(result.secure_url);
+      }
     );
+    streamifier.createReadStream(fileBuffer).pipe(stream);
   });
 };
 // streamifier.createReadStream(file.buffer).pipe(stream);

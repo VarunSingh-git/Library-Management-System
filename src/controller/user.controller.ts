@@ -3,14 +3,14 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { User } from "../models/user.model.js";
 import { RegisterUserInput } from "../types/user.type.js";
 import { uploadToCloudinary } from "../utils/cloudinary.js";
-import jwt from "jsonwebtoken";
 
 const registration = asyncHandler(async (req, res) => {
   const { name, department, phoneNo, pswrd, role }: RegisterUserInput =
     req.body;
 
   const existedUser = await User.findOne({
-    $and: [{ name }, { phoneNo }],
+    role,
+    $or: [{ name }, { phoneNo }],
   });
 
   if (existedUser) throw new Error("Registration is already done");
@@ -42,6 +42,7 @@ const registration = asyncHandler(async (req, res) => {
   const uploadResult: string = (await uploadToCloudinary(
     req.file.buffer
   )) as string;
+  console.log(uploadResult);
   if (!uploadResult) throw new Error("File is compulsory");
 
   const user = await User.create({
@@ -80,7 +81,8 @@ const logIn = asyncHandler(async (req, res) => {
     throw new Error("Invalid credentials");
   }
 
-  const isPasswordCorrect = userExitence.isPswrdCorrect(pswrd);
+  const isPasswordCorrect = await userExitence.isPswrdCorrect(pswrd);
+  console.log(isPasswordCorrect);
   if (!isPasswordCorrect) throw new Error("Wrong Password");
 
   const accessToken = userExitence.generateAccessToken();
@@ -144,4 +146,147 @@ const logOut = asyncHandler(async (req, res) => {
     });
 });
 
-export { registration, logIn, logOut };
+const updateUserDetails = asyncHandler(async (req, res) => {
+  try {
+    const { username, department, phone, role } = req.body;
+    const allowedRoles = ["admin", "student", "faculty", "guest"];
+    console.log(username, department, phone, role);
+    if (!username && !department && !phone && !role) {
+      throw new Error("All fields are required");
+    }
+    if (
+      username.length < 2 ||
+      username.length > 20 ||
+      typeof username !== "string"
+    ) {
+      throw new Error(
+        "Name should be greater then 2 and less then 20 characters "
+      );
+    }
+    if (phone.toString().length !== 10 || typeof phone !== "number") {
+      throw new Error("Phone no must be 10 numbers only");
+    }
+
+    if (
+      !department ||
+      department.length > 50 ||
+      typeof department !== "string"
+    ) {
+      throw new Error("Please enter your department");
+    }
+    if (!role || typeof role !== "string" || !allowedRoles.includes(role)) {
+      throw new Error("Please enter your role");
+    }
+
+    const userData = await User.findById(req.user?._id).select(
+      "-pswrd -refreshToken"
+    );
+
+    if (
+      userData?.name === username &&
+      userData?.department === department &&
+      userData?.phoneNo === phone &&
+      userData?.role === role
+    ) {
+      throw new Error("No changes in data");
+    }
+
+    const result = await User.findByIdAndUpdate(
+      req.user?._id,
+      {
+        $set: {
+          name: username,
+          department: department,
+          phoneNo: phone,
+          role: role,
+          refreshToken: "",
+        },
+      },
+      {
+        new: true,
+      }
+    ).select("-pswrd");
+    res
+      .clearCookie("accessToken")
+      .clearCookie("refreshToken")
+      .status(200)
+      .json({
+        success: true,
+        message: "Role updated successfully. Please login again.",
+      });
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+const chnagePassowrd = asyncHandler(async (req, res) => {
+  const { oldPass, newPass, confirmPass } = req.body;
+  console.log(req.body);
+  if (
+    typeof confirmPass !== "string" ||
+    typeof oldPass !== "string" ||
+    typeof newPass !== "string"
+  ) {
+    throw new Error("Invalid Passoword");
+  }
+  if (!oldPass) throw new Error("Enter old password first");
+  if (newPass !== confirmPass)
+    throw new Error("new password and confirm password should be same");
+
+  const user = await User.findById(req.user?._id);
+  if (!user) throw new Error("User not found");
+  const confirmPassword = await user.isPswrdCorrect(oldPass);
+  if (!confirmPassword) throw new Error("please enter your old password first");
+
+  user.refreshToken = "";
+  try {
+    user.pswrd = newPass;
+    await user.save();
+  } catch (err) {
+    return new Error("Server internal error during changing the password");
+  }
+  console.log(user.pswrd);
+  const opts = {
+    httpOnly: true,
+    secure: true,
+  };
+  return res
+    .status(201)
+    .cookie("accessToken", opts)
+    .cookie("refreshToken", opts)
+    .json({
+      msg: "Password changed successfully. Please login again",
+      user: {},
+    });
+});
+
+const getUserData = asyncHandler(async (req, res) => {
+  console.log("req.user", req.user);
+  const user = await User.findById(req.user?._id).select(
+    "-refreshToken -pswrd"
+  );
+  if (!user) throw new Error("User not found");
+  return res.status(200).json({
+    msg: "User data fetch successfull",
+    user,
+  });
+});
+
+//this is for testing
+const test = asyncHandler(async (req, res) => {
+  if (req.user?._id) {
+    return res.status(200).json({ msg: "user is still login" });
+  } else {
+    return false;
+  }
+});
+
+export {
+  registration,
+  logIn,
+  logOut,
+  updateUserDetails,
+  chnagePassowrd,
+  getUserData,
+  test,
+};

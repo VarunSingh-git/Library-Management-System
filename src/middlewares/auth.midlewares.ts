@@ -7,7 +7,7 @@ export const authMiddlerware = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const token: string = req.cookies.accessToken!;
     if (!token) next(new Error("Token missing. please login"));
-    console.log("token", token);
+    // console.log("token", token);
     try {
       const decode: JWT_Payload = jwt.verify(
         token,
@@ -25,3 +25,18 @@ export const authMiddlerware = asyncHandler(
     }
   }
 );
+
+export const authorizeMiddlware = function (...role: Array<string>) {
+  return asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const allowedRoles = req.user?.role as string;
+        console.log(allowedRoles);
+        if (!role.includes(allowedRoles)) next(new Error("Access denied"));
+        next();
+      } catch (error) {
+        throw new Error("Internal server error occur due to role validation ");
+      }
+    }
+  );
+};

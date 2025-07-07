@@ -18,6 +18,13 @@ const userSchema = new Schema<userType>(
     rollNo: {
       type: String,
     },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    otp: { type: String },
+    otpExpiry: { type: Date },
     photo: {
       type: String, // cloudinary
       required: true,

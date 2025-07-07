@@ -15,6 +15,7 @@
     "@types/cookie-parser": "^1.4.9",
     "@types/cors": "^2.8.19",
     "@types/mongoose": "^5.11.96",
+    "@types/nodemailer": "^6.4.17",
     "bcryptjs": "^3.0.2",
     "cloudinary": "^2.7.0",
     "cookie-parser": "^1.4.7",
@@ -24,6 +25,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.14.3",
     "multer": "^2.0.1",
+    "nodemailer": "^7.0.4",
     "streamifier": "^0.1.1"
   },
   "devDependencies": {

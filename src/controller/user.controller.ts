@@ -2,10 +2,17 @@ import mongoose from "mongoose";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { User } from "../models/user.model.js";
 import { RegisterUserInput } from "../types/user.type.js";
-import { uploadToCloudinary } from "../utils/cloudinary.js";
+import {
+  uploadToCloudinary,
+  publicId,
+  getPublicId,
+} from "../utils/cloudinary.js";
+import { sendOTP } from "../utils/sendEmail.js";
+import { otpGenerator } from "../utils/generateOTP.js";
+import bcryptjs from "bcryptjs";
 
 const registration = asyncHandler(async (req, res) => {
-  const { name, department, phoneNo, pswrd, role }: RegisterUserInput =
+  const { name, department, phoneNo, pswrd, role, email }: RegisterUserInput =
     req.body;
 
   const existedUser = await User.findOne({
@@ -15,13 +22,24 @@ const registration = asyncHandler(async (req, res) => {
 
   if (existedUser) throw new Error("Registration is already done");
 
-  if (!name || !department || !phoneNo || !pswrd || !role) {
+  if (!name || !department || !phoneNo || !pswrd || !role || !email) {
     throw new Error("All fields are required");
   }
   if (name.length < 2 || name.length > 20) {
     throw new Error(
       "Name should be greater then 2 and less then 20 characters "
     );
+  }
+  if (!email) throw new Error("Email not found");
+  if (
+    !email.includes("@") ||
+    email.startsWith("@") ||
+    email.endsWith("@") ||
+    email.split("@").length !== 2 ||
+    email.split("@")[1].indexOf(".") === -1 ||
+    email.split("@")[1].startsWith(".")
+  ) {
+    throw new Error("Invalid email address");
   }
   if (phoneNo.toString().length !== 10) {
     throw new Error("Phone no must be 10 numbers only");
@@ -35,19 +53,18 @@ const registration = asyncHandler(async (req, res) => {
   if (!role) {
     throw new Error("Please enter your role");
   }
-  console.log("req.file?.buffer", req.file);
+  // console.log("req.file?.buffer", req.file);
   if (!req.file?.buffer || !req.file) {
     throw new Error("Please upload your image");
   }
-  const uploadResult: string = (await uploadToCloudinary(
-    req.file.buffer
-  )) as string;
-  console.log(uploadResult);
+  const uploadResult = await uploadToCloudinary(req.file?.buffer);
+  // console.log(uploadResult);
   if (!uploadResult) throw new Error("File is compulsory");
 
   const user = await User.create({
     name,
-    photo: uploadResult,
+    photo: uploadResult.secure_url,
+    email,
     department,
     phoneNo,
     pswrd,
@@ -57,8 +74,8 @@ const registration = asyncHandler(async (req, res) => {
     "-pswrd -refreshToken"
   );
   if (!finalResult) throw new Error("Server error occur... try again");
-  console.log(finalResult);
-  res.status(200).json({
+  // console.log(finalResult);
+  return res.status(200).json({
     finalResult,
     message: "User registred successfully",
   });
@@ -66,7 +83,7 @@ const registration = asyncHandler(async (req, res) => {
 
 const logIn = asyncHandler(async (req, res) => {
   const { name, phone, pswrd } = req.body;
-  console.log(req.body);
+  // console.log(req.body);
   const userExitence = await User.findOne({
     name: name,
     phoneNo: phone,
@@ -82,7 +99,7 @@ const logIn = asyncHandler(async (req, res) => {
   }
 
   const isPasswordCorrect = await userExitence.isPswrdCorrect(pswrd);
-  console.log(isPasswordCorrect);
+  // console.log(isPasswordCorrect);
   if (!isPasswordCorrect) throw new Error("Wrong Password");
 
   const accessToken = userExitence.generateAccessToken();
@@ -91,7 +108,7 @@ const logIn = asyncHandler(async (req, res) => {
   const logginUser = await User.findById(userExitence?._id).select(
     "_id name photo role"
   );
-  console.log("logginUser", logginUser);
+  // console.log("logginUser", logginUser);
   if (!logginUser) throw new Error("login error occur");
 
   return res
@@ -113,7 +130,7 @@ const logIn = asyncHandler(async (req, res) => {
 });
 
 const logOut = asyncHandler(async (req, res) => {
-  console.log("req.user?._id", req.user?._id);
+  // console.log("req.user?._id", req.user?._id);
   const result = await User.findByIdAndUpdate(
     req.user?._id,
     {
@@ -125,7 +142,7 @@ const logOut = asyncHandler(async (req, res) => {
       new: true,
     }
   );
-  console.log("result", result);
+  // console.log("result", result);
   return res
     .status(201)
     .cookie("accessToken", {
@@ -148,10 +165,10 @@ const logOut = asyncHandler(async (req, res) => {
 
 const updateUserDetails = asyncHandler(async (req, res) => {
   try {
-    const { username, department, phone, role } = req.body;
+    const { username, department, phone, role, email } = req.body;
     const allowedRoles = ["admin", "student", "faculty", "guest"];
-    console.log(username, department, phone, role);
-    if (!username && !department && !phone && !role) {
+    // console.log(username, department, phone, role);
+    if (!username && !department && !phone && !role && !email) {
       throw new Error("All fields are required");
     }
     if (
@@ -163,6 +180,19 @@ const updateUserDetails = asyncHandler(async (req, res) => {
         "Name should be greater then 2 and less then 20 characters "
       );
     }
+
+    if (
+      !email.includes("@") ||
+      email.startsWith("@") ||
+      email.endsWith("@") ||
+      email.split("@").length !== 2 ||
+      email.split("@")[1].indexOf(".") === -1 ||
+      email.split("@")[1].startsWith(".") ||
+      email.split(".").pop().length < 2
+    ) {
+      throw new Error("Invalid email address");
+    }
+
     if (phone.toString().length !== 10 || typeof phone !== "number") {
       throw new Error("Phone no must be 10 numbers only");
     }
@@ -186,12 +216,13 @@ const updateUserDetails = asyncHandler(async (req, res) => {
       userData?.name === username &&
       userData?.department === department &&
       userData?.phoneNo === phone &&
-      userData?.role === role
+      userData?.role === role &&
+      userData?.email === email
     ) {
       throw new Error("No changes in data");
     }
 
-    const result = await User.findByIdAndUpdate(
+    await User.findByIdAndUpdate(
       req.user?._id,
       {
         $set: {
@@ -199,6 +230,7 @@ const updateUserDetails = asyncHandler(async (req, res) => {
           department: department,
           phoneNo: phone,
           role: role,
+          email: email,
           refreshToken: "",
         },
       },
@@ -206,7 +238,7 @@ const updateUserDetails = asyncHandler(async (req, res) => {
         new: true,
       }
     ).select("-pswrd");
-    res
+    return res
       .clearCookie("accessToken")
       .clearCookie("refreshToken")
       .status(200)
@@ -272,6 +304,107 @@ const getUserData = asyncHandler(async (req, res) => {
   });
 });
 
+const updateUserImg = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user?._id);
+  if (!user) throw new Error("User not found");
+
+  const file = req.file;
+  if (!file) throw new Error("Image not found");
+
+  const uploadedData = await uploadToCloudinary(file?.buffer);
+  console.log("uploadedData", uploadedData.public_id);
+
+  if (!uploadedData) throw new Error("Error occur during updation image");
+
+  const result = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        photo: uploadedData.secure_url,
+      },
+    },
+    {
+      new: true,
+    }
+  ).select("_id name photo departmen phoneNo role");
+  if (!result) throw new Error("Technical error occur during img updation");
+  console.log("result from img updation", result);
+
+  return res.status(200).json({ msg: "image successfully updated", result });
+});
+
+const removeUserImg = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user?._id);
+  if (!user) throw new Error("user not found");
+
+  const url = user.photo;
+  const updatedUser = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $unset: {
+        photo: 1,
+      },
+    },
+    {
+      new: true,
+    }
+  ).select("_id name photo departmen phoneNo role");
+  const removeFromCloudinary = publicId(getPublicId(url));
+  if (!updatedUser || !removeFromCloudinary)
+    throw new Error("Image can't be remove");
+
+  return res
+    .status(200)
+    .json({ msg: "Image remove successfully", updatedUser });
+});
+
+const sendOtpController = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+  if (!email) throw new Error("Invalid email address");
+  const user = await User.findOne({ email });
+  if (!user) throw new Error("user not found");
+
+  const OTP: string = otpGenerator();
+  (user.otp = OTP), (user.otpExpiry = new Date(Date.now() + 5 * 60 * 1000));
+  await user.save();
+  await sendOTP(email, OTP);
+  return res.status(200).json({
+    msg: `Dear ${user.name} your OTP sent to your registered mail.`,
+  });
+});
+
+const verifyOTPandResetPassword = asyncHandler(async (req, res) => {
+  const { email, otp, newPassword } = req.body;
+  if (!email) throw new Error("Invalid email address");
+  const user = await User.findOne({ email });
+  if (!user) throw new Error("User not found");
+
+  if (!otp || user.otp !== otp || user.otpExpiry! < new Date())
+    throw new Error("Invalid or expired OTP");
+
+  if (!newPassword || newPassword.length < 6 || newPassword.length > 20) {
+    throw new Error("Password should be 6 to 20 characters long");
+  }
+
+  const hashed = await bcryptjs.hash(newPassword, 10);
+  const updatedUser = await User.findByIdAndUpdate(
+    user._id,
+    {
+      $set: { pswrd: hashed },
+      $unset: { refreshToken: 1, otp: 1, otpExpiry: 1 },
+    },
+    { new: true }
+  );
+  if (!updatedUser) throw new Error("Server error occur during reset password");
+  console.log("updatedUser", updatedUser);
+  return res
+    .status(200)
+    .clearCookie("accessToken")
+    .clearCookie("refreshToken")
+    .json({
+      msg: "Password reset successfully. Please login again",
+    });
+});
 //this is for testing
 const test = asyncHandler(async (req, res) => {
   if (req.user?._id) {
@@ -288,5 +421,9 @@ export {
   updateUserDetails,
   chnagePassowrd,
   getUserData,
-  test,
+  test, //  for testing
+  updateUserImg,
+  removeUserImg,
+  sendOtpController,
+  verifyOTPandResetPassword,
 };

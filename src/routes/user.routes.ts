@@ -7,6 +7,10 @@ import {
   chnagePassowrd,
   getUserData,
   test,
+  updateUserImg,
+  removeUserImg,
+  sendOtpController,
+  verifyOTPandResetPassword,
 } from "../controller/user.controller.js";
 import { upload } from "../middlewares/multer.middlewares.js";
 import {
@@ -24,12 +28,19 @@ router.route("/update-user-details").post(authMiddlerware, updateUserDetails);
 
 router.route("/update-user-password").post(authMiddlerware, chnagePassowrd);
 
-router
-  .route("/get-user-data")
-  .get(authMiddlerware, authorizeMiddlware("admin"), getUserData);
+router.route("/get-user-data").get(authMiddlerware, getUserData);
 
 router.route("/log-out").post(authMiddlerware, logOut);
 
-// router.route("/test").get(authMiddlerware, test);
+router
+  .route("/img-update")
+  .patch(authMiddlerware, upload.single("photo"), updateUserImg);
+
+router.route("/remove-user-image").patch(authMiddlerware, removeUserImg);
+
+router.route("/sent-otp").post(sendOtpController);
+router.route("/validate-otp").post(verifyOTPandResetPassword);
+
+router.route("/test").get(authMiddlerware, test);
 
 export default router;

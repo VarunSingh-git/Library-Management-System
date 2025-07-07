@@ -4,6 +4,9 @@ import mongoose from "mongoose";
 export interface userType {
   name: string;
   rollNo?: string;
+  email: string;
+  otp?: String;
+  otpExpiry?: Date;
   photo: string;
   department: string;
   year?: string;
@@ -30,10 +33,10 @@ export interface userType {
   isPswrdCorrect(pswrd: string): Promise<boolean>;
 }
 
-
 export interface RegisterUserInput {
   name: string;
   photo: string;
+  email: string;
   department: string;
   pswrd: string;
   rollNo?: string;

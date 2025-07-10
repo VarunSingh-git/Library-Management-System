@@ -17,12 +17,13 @@ import {
   authMiddlerware,
   authorizeMiddlware,
 } from "../middlewares/auth.midlewares.js";
+import { otpRateLimit, loginRateLimit } from "../utils/rateLimiter.js";
 
 const router = Router();
 
 router.route("/registration").post(upload.single("photo"), registration);
 
-router.route("/log-in").post(logIn);
+router.route("/log-in").post(loginRateLimit, logIn);
 
 router.route("/update-user-details").post(authMiddlerware, updateUserDetails);
 
@@ -38,7 +39,7 @@ router
 
 router.route("/remove-user-image").patch(authMiddlerware, removeUserImg);
 
-router.route("/sent-otp").post(sendOtpController);
+router.route("/sent-otp").post(otpRateLimit, sendOtpController);
 router.route("/validate-otp").post(verifyOTPandResetPassword);
 
 router.route("/test").get(authMiddlerware, test);

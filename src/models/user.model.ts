@@ -2,7 +2,6 @@ import mongoose from "mongoose";
 import { model } from "mongoose";
 import { Schema } from "mongoose";
 import { userType } from "../types/user.type.js";
-import { userRole } from "../types/enums/user.enum.js";
 import bcryptjs from "bcryptjs";
 import jwt, { SignOptions } from "jsonwebtoken";
 
@@ -46,8 +45,9 @@ const userSchema = new Schema<userType>(
     },
     role: {
       type: String,
-      enum: Object.values(userRole),
+      enum: ["admin", "student", "faculty", "guest"],
       required: true,
+      default: "student",
     },
     bookIssueLimit: {
       type: Number,

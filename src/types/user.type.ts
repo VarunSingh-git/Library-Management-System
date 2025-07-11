@@ -1,4 +1,3 @@
-import { userRole } from "../types/enums/user.enum.js";
 import mongoose from "mongoose";
 
 export interface userType {
@@ -12,7 +11,7 @@ export interface userType {
   year?: string;
   phoneNo: number;
   pswrd: string;
-  role: userRole;
+  role: string;
   issuedBook: Array<{
     _id: String;
     date: Date;

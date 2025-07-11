@@ -10,7 +10,8 @@ app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 
 import userRoute from "./routes/user.routes.js";
+import adminRoute from "./routes/admin.routes.js";
+
 app.use("/api/v1/user", userRoute);
 
-export { app };
 export default app;

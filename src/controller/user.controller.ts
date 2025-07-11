@@ -10,13 +10,16 @@ import {
 import { sendOTP } from "../utils/sendEmail.js";
 import { otpGenerator } from "../utils/generateOTP.js";
 import bcryptjs from "bcryptjs";
+import { loginRateLimit } from "../utils/rateLimiter.js";
 
 const registration = asyncHandler(async (req, res) => {
   const { name, department, phoneNo, pswrd, role, email }: RegisterUserInput =
     req.body;
 
+  if (req.body.role && req.body.role !== "student")
+    return res.status(403).json({ message: "Role tampering detected." });
+
   const existedUser = await User.findOne({
-    role,
     $or: [{ name }, { phoneNo }],
   });
 
@@ -68,7 +71,7 @@ const registration = asyncHandler(async (req, res) => {
     department,
     phoneNo,
     pswrd,
-    role,
+    role: "student",
   });
   const finalResult = await User.findById(user?._id).select(
     "-pswrd -refreshToken"
@@ -110,7 +113,7 @@ const logIn = asyncHandler(async (req, res) => {
   );
   // console.log("logginUser", logginUser);
   if (!logginUser) throw new Error("login error occur");
-
+  loginRateLimit.resetKey(req.ip!.toString());
   return res
     .status(200)
     .cookie("accessToken", accessToken, {
@@ -131,7 +134,7 @@ const logIn = asyncHandler(async (req, res) => {
 
 const logOut = asyncHandler(async (req, res) => {
   // console.log("req.user?._id", req.user?._id);
-  const result = await User.findByIdAndUpdate(
+  await User.findByIdAndUpdate(
     req.user?._id,
     {
       $unset: {
@@ -145,13 +148,13 @@ const logOut = asyncHandler(async (req, res) => {
   // console.log("result", result);
   return res
     .status(201)
-    .cookie("accessToken", {
+    .clearCookie("accessToken", {
       httpOnly: true,
       secure: true,
       sameSite: "strict",
       maxAge: 15 * 60 * 1000,
     })
-    .cookie("refreshToken", {
+    .clearCookie("refreshToken", {
       httpOnly: true,
       secure: true,
       sameSite: "strict",
@@ -380,7 +383,12 @@ const verifyOTPandResetPassword = asyncHandler(async (req, res) => {
   const user = await User.findOne({ email });
   if (!user) throw new Error("User not found");
 
-  if (!otp || user.otp !== otp || user.otpExpiry! < new Date())
+  if (
+    !otp ||
+    user.otp !== otp ||
+    typeof otp !== "number" ||
+    user.otpExpiry! < new Date()
+  )
     throw new Error("Invalid or expired OTP");
 
   if (!newPassword || newPassword.length < 6 || newPassword.length > 20) {

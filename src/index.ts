@@ -1,12 +1,12 @@
 import { Mongoose } from "mongoose";
 import dotenv from "dotenv";
-import { app } from "./app.js";
+import app from "./app.js";
 import connectDB from "./config/db/index.db.js";
 import express from "express";
 dotenv.config({
   path: "/.env",
 });
-import type {} from "./types/index.d.ts";
+import type {} from "./types/index.js";
 
 const startServer = async () => {
   await connectDB()

@@ -15,8 +15,8 @@ import { loginRateLimit } from "../utils/rateLimiter.js";
 const registration = asyncHandler(async (req, res) => {
   const { name, department, phoneNo, pswrd, role, email }: RegisterUserInput =
     req.body;
-
-  if (req.body.role && req.body.role !== "student")
+  console.log(name, department, phoneNo, pswrd, role, email);
+  if (req.body.role)
     return res.status(403).json({ message: "Role tampering detected." });
 
   const existedUser = await User.findOne({
@@ -25,7 +25,7 @@ const registration = asyncHandler(async (req, res) => {
 
   if (existedUser) throw new Error("Registration is already done");
 
-  if (!name || !department || !phoneNo || !pswrd || !role || !email) {
+  if (!name || !department || !phoneNo || !pswrd || !email) {
     throw new Error("All fields are required");
   }
   if (name.length < 2 || name.length > 20) {
@@ -53,15 +53,13 @@ const registration = asyncHandler(async (req, res) => {
   if (pswrd.length < 6 || pswrd.length > 20) {
     throw new Error("Password should be 6 to 20 characters long");
   }
-  if (!role) {
-    throw new Error("Please enter your role");
+  if (role) {
+    throw new Error("Role can't set by non-admin user");
   }
-  // console.log("req.file?.buffer", req.file);
   if (!req.file?.buffer || !req.file) {
     throw new Error("Please upload your image");
   }
   const uploadResult = await uploadToCloudinary(req.file?.buffer);
-  // console.log(uploadResult);
   if (!uploadResult) throw new Error("File is compulsory");
 
   const user = await User.create({
@@ -87,17 +85,20 @@ const registration = asyncHandler(async (req, res) => {
 const logIn = asyncHandler(async (req, res) => {
   const { name, phone, pswrd } = req.body;
   // console.log(req.body);
+  console.log("1", name, phone, pswrd);
   const userExitence = await User.findOne({
     name: name,
     phoneNo: phone,
   });
   if (!userExitence) throw new Error("User not found");
-  if (
-    userExitence.name !== name ||
-    userExitence.phoneNo !== phone ||
-    !pswrd ||
-    typeof pswrd !== "string"
-  ) {
+  if (userExitence.role === "admin")
+    throw new Error("You cannot access admin panel");
+  console.log(userExitence.name);
+  console.log(userExitence.phoneNo);
+
+  if (userExitence.name !== name || userExitence.phoneNo !== phone || !pswrd) {
+    console.log("2", name, phone, pswrd);
+
     throw new Error("Invalid credentials");
   }
 
@@ -168,10 +169,9 @@ const logOut = asyncHandler(async (req, res) => {
 
 const updateUserDetails = asyncHandler(async (req, res) => {
   try {
-    const { username, department, phone, role, email } = req.body;
-    const allowedRoles = ["admin", "student", "faculty", "guest"];
-    // console.log(username, department, phone, role);
-    if (!username && !department && !phone && !role && !email) {
+    const { username, department, phone, email } = req.body;
+
+    if (!username && !department && !phone && !email) {
       throw new Error("All fields are required");
     }
     if (
@@ -207,9 +207,6 @@ const updateUserDetails = asyncHandler(async (req, res) => {
     ) {
       throw new Error("Please enter your department");
     }
-    if (!role || typeof role !== "string" || !allowedRoles.includes(role)) {
-      throw new Error("Please enter your role");
-    }
 
     const userData = await User.findById(req.user?._id).select(
       "-pswrd -refreshToken"
@@ -219,7 +216,6 @@ const updateUserDetails = asyncHandler(async (req, res) => {
       userData?.name === username &&
       userData?.department === department &&
       userData?.phoneNo === phone &&
-      userData?.role === role &&
       userData?.email === email
     ) {
       throw new Error("No changes in data");
@@ -232,7 +228,6 @@ const updateUserDetails = asyncHandler(async (req, res) => {
           name: username,
           department: department,
           phoneNo: phone,
-          role: role,
           email: email,
           refreshToken: "",
         },
@@ -386,7 +381,7 @@ const verifyOTPandResetPassword = asyncHandler(async (req, res) => {
   if (
     !otp ||
     user.otp !== otp ||
-    typeof otp !== "number" ||
+    typeof otp !== "string" ||
     user.otpExpiry! < new Date()
   )
     throw new Error("Invalid or expired OTP");
@@ -417,7 +412,8 @@ const verifyOTPandResetPassword = asyncHandler(async (req, res) => {
 //this is for testing
 const test = asyncHandler(async (req, res) => {
   if (req.user?._id) {
-    return res.status(200).json({ msg: "user is still login" });
+    const user = req.user?.role;
+    return res.status(200).json({ msg: "user is still login", user });
   } else {
     return false;
   }

@@ -13,5 +13,7 @@ import userRoute from "./routes/user.routes.js";
 import adminRoute from "./routes/admin.routes.js";
 
 app.use("/api/v1/user", userRoute);
+app.use("/api/v1/admin", adminRoute);
 
+// export app;
 export default app;

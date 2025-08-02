@@ -29,14 +29,10 @@ export const authMiddlerware = asyncHandler(
 export const authorizeMiddlware = function (...role: Array<string>) {
   return asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
-      try {
-        const allowedRoles = req.user?.role as string;
-        console.log(allowedRoles);
-        if (!role.includes(allowedRoles)) next(new Error("Access denied"));
-        next();
-      } catch (error) {
-        throw new Error("Internal server error occur due to role validation ");
-      }
+      const allowedRoles = req.user?.role as string;
+      console.log(allowedRoles);
+      if (!role.includes(allowedRoles)) next(new Error("Access denied"));
+      next();
     }
   );
 };

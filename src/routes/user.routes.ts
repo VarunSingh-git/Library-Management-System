@@ -37,6 +37,7 @@ router
   .route("/img-update")
   .patch(authMiddlerware, upload.single("photo"), updateUserImg);
 
+
 router.route("/remove-user-image").patch(authMiddlerware, removeUserImg);
 
 router.route("/sent-otp").post(otpRateLimit, sendOtpController);

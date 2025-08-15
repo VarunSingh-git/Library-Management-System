@@ -20,7 +20,7 @@ const registration = asyncHandler(async (req, res) => {
     return res.status(403).json({ message: "Role tampering detected." });
 
   const existedUser = await User.findOne({
-    $or: [{ name }, { phoneNo }],
+    $and: [{ name }, { phoneNo }],
   });
 
   if (existedUser) throw new Error("Registration is already done");
@@ -84,23 +84,22 @@ const registration = asyncHandler(async (req, res) => {
 
 const logIn = asyncHandler(async (req, res) => {
   const { name, phone, pswrd } = req.body;
-  // console.log(req.body);
-  console.log("1", name, phone, pswrd);
   const userExitence = await User.findOne({
     name: name,
     phoneNo: phone,
   });
+
   if (!userExitence) throw new Error("User not found");
-  if (userExitence.role === "admin")
-    throw new Error("You cannot access admin panel");
+  if (userExitence?.isDeleted === true)
+    throw new Error("User account is deleted");
+
+  if (userExitence.role !== "user")
+    throw new Error("Access denied: Only users can access this login");
   console.log(userExitence.name);
   console.log(userExitence.phoneNo);
 
-  if (userExitence.name !== name || userExitence.phoneNo !== phone || !pswrd) {
-    console.log("2", name, phone, pswrd);
-
+  if (userExitence.name !== name || userExitence.phoneNo !== phone || !pswrd)
     throw new Error("Invalid credentials");
-  }
 
   const isPasswordCorrect = await userExitence.isPswrdCorrect(pswrd);
   // console.log(isPasswordCorrect);

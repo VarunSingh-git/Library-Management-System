@@ -17,8 +17,7 @@ const adminRegistration = asyncHandler(async (req, res) => {
     req.body;
   console.log(name, department, phoneNo, pswrd, role, email);
   const existedUser = await User.findOne({
-    role,
-    $or: [{ name }, { phoneNo }],
+    $and: [{ name }, { phoneNo }],
   });
 
   if (existedUser) throw new Error("Registration is already done");
@@ -163,17 +162,43 @@ const adminLogout = asyncHandler(async (req, res) => {
 });
 
 const getAllUsers = asyncHandler(async (req, res) => {
-  const user = await User.find().select("-pswrd");
+  const user = await User.find({ isDeleted: false }).select(
+    "-refreshToken -pswrd"
+  );
   return res.status(200).json({
     msg: `${user.length} users are fetched`,
     user,
   });
 });
 
+const undoDeletedUser = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+  const userToDelete = await User.find({ _id: userId, isDeleted: true });
+  if (!userToDelete) throw new Error("User not found");
+
+  const user = await User.findByIdAndUpdate(
+    userId,
+    {
+      $set: {
+        isDeleted: false,
+      },
+    },
+    {
+      new: true,
+    }
+  );
+  console.log("a", user);
+
+  return res
+    .status(200)
+    .json({ msg: "Deleted user recover successfully", user });
+});
+
 const deleteUser = asyncHandler(async (req, res) => {
   const { userId } = req.params;
   const userToDelete = await User.findById(userId);
   if (!userToDelete) throw new Error("User not found");
+  if (userToDelete?.isDeleted === true) throw new Error("User already deleted");
 
   if (userToDelete?.role === "admin") {
     const adminCount = await User.countDocuments({ role: "admin" });
@@ -184,12 +209,32 @@ const deleteUser = asyncHandler(async (req, res) => {
       );
   }
 
-  const user = await User.deleteOne({ _id: userToDelete?._id });
-  console.log("a", user);
+  const user = await User.findByIdAndUpdate(
+    userToDelete?._id,
+    {
+      $set: {
+        isDeleted: true,
+      },
+    },
+    {
+      new: true,
+    }
+  );
+  const findedUser = await User.findById(user?._id).select(
+    "-pswrd -refreshToken "
+  );
+  if (!findedUser) throw new Error("Oops... deletion fail!");
+  return res.status(200).json({ msg: "User delete successfully", findedUser });
+});
 
-  if (user.deletedCount === 0)
-    throw new Error("Deletion is not completed yet..");
-  return res.status(200).json({ msg: "User delete successfully", user });
+const getAllDeletedUsers = asyncHandler(async (req, res) => {
+  const deletedUser = await User.find({ isDeleted: true }).select(
+    "-refreshToken -pswrd"
+  );
+  if (!deletedUser) throw new Error("No deleted user found..!");
+  return res
+    .status(200)
+    .json({ msg: `${deletedUser.length} deleted user found`, deletedUser });
 });
 
 const sendOtpController = asyncHandler(async (req, res) => {
@@ -199,7 +244,7 @@ const sendOtpController = asyncHandler(async (req, res) => {
   if (!user) throw new Error("user not found");
 
   const OTP: string = otpGenerator();
-  (user.otp = OTP), (user.otpExpiry = new Date(Date.now() + 5 * 60 * 1000));
+  (user.otp = OTP), (user.otpExpiry = new Date(Date.now() + 1 * 60 * 1000));
   await user.save();
   await sendOTP(email, OTP);
   return res.status(200).json({
@@ -306,6 +351,19 @@ const removeUserImg = asyncHandler(async (req, res) => {
     .json({ msg: "Image remove successfully", updatedUser });
 });
 
+const getUserData = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+  const user = await User.find({ _id: userId, isDeleted: false }).select(
+    "-refreshToken -pswrd"
+  );
+
+  if (!user || !user.length) throw new Error("User not found");
+  return res.status(200).json({
+    msg: "User data fetch successfull",
+    user,
+  });
+});
+
 export {
   adminRegistration,
   adminLogin,
@@ -316,4 +374,7 @@ export {
   sendOtpController,
   removeUserImg,
   updateUserImg,
+  getUserData,
+  undoDeletedUser,
+  getAllDeletedUsers,
 };

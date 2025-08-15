@@ -9,6 +9,9 @@ import {
   verifyOTPandResetPassword,
   removeUserImg,
   updateUserImg,
+  getUserData,
+  undoDeletedUser,
+  getAllDeletedUsers,
 } from "../controller/admin.controller.js";
 import { otpRateLimit, loginRateLimit } from "../utils/rateLimiter.js";
 import {
@@ -35,7 +38,11 @@ router
 
 router
   .route("/delet-user/:userId")
-  .delete(authMiddlerware, authorizeMiddlware("admin"), deleteUser);
+  .post(authMiddlerware, authorizeMiddlware("admin"), deleteUser);
+
+router
+  .route("/recover-user-account/:userId")
+  .post(authMiddlerware, authorizeMiddlware("admin"), undoDeletedUser);
 
 router.route("/sent-otp").post(otpRateLimit, sendOtpController);
 
@@ -52,5 +59,13 @@ router
     upload.single("photo"),
     updateUserImg
   );
+
+router
+  .route("/get-user-data/:userId")
+  .get(authMiddlerware, authorizeMiddlware("admin"), getUserData);
+
+router
+  .route("/get-deleted-user-data")
+  .get(authMiddlerware, authorizeMiddlware("admin"), getAllDeletedUsers);
 
 export default router;

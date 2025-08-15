@@ -43,6 +43,10 @@ const userSchema = new Schema<userType>(
       type: String,
       required: true,
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
     role: {
       type: String,
       enum: ["admin", "student", "faculty", "guest"],
@@ -91,7 +95,7 @@ userSchema.pre("save", async function (next) {
     next();
   }
 });
-
+  
 userSchema.methods.isPswrdCorrect = async function (pswrd: string) {
   return await bcryptjs.compare(pswrd, this.pswrd);
 };

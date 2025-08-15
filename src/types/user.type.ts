@@ -20,6 +20,7 @@ export interface userType {
     _id: String;
     date: Date;
   }>;
+  isDeleted: boolean;
   refreshToken: string;
   bookIssueLimit: number;
   fine: Array<{

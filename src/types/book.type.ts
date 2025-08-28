@@ -1,21 +1,19 @@
-import { bookType, itemBorrower } from "./enums/book.enum.js";
+import { itemBorrower } from "./enums/book.enum.js";
 import mongoose from "mongoose";
 
 export interface book {
   title: string;
   authorName: string;
-  type: bookType;
+  type: string;
   bookAccessionNo: string;
-  isbn: string;
-  isIssueableItems: boolean;
+  isbn?: string;
   publication: string;
   edition: string;
   totalCopies: number;
   availableCopies: number;
   bookPrice: number;
   isAvailable: boolean;
-  issuedToInfo: issuedToStructure[];
-  screenshot: string;
+  screenshot?: string;
 }
 
 export interface issuedToStructure {

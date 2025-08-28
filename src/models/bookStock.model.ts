@@ -1,4 +1,4 @@
-import { bookType, itemBorrower } from "../types/enums/book.enum.js";
+import { itemBorrower } from "../types/enums/book.enum.js";
 import { book } from "../types/book.type.js";
 import mongoose from "mongoose";
 import { Schema } from "mongoose";
@@ -18,24 +18,18 @@ const AddBookSchema = new Schema<book>(
       lowercase: true,
     },
     type: {
-      // item type
       type: String,
-      enum: Object.values(bookType),
       required: true,
     },
     bookAccessionNo: {
       type: String,
       required: true,
+      unique: true,
     },
     isbn: {
       type: String,
       required: true,
       lowercase: true,
-    },
-    isIssueableItems: {
-      type: Boolean,
-      required: true,
-      default: true,
     },
     publication: {
       type: String,
@@ -63,10 +57,6 @@ const AddBookSchema = new Schema<book>(
     },
     screenshot: {
       type: String,
-      required: true,
-    },
-    issuedToInfo: {
-      type: [IssuedBook], // here we use this schema as array of object
     },
     isAvailable: {
       type: Boolean,

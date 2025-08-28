@@ -6,9 +6,8 @@ import { User } from "./user.model.js";
 
 const issuedToSchema = new Schema<issuedToStructure>(
   {
-    // this is seperate schema of issuedTo
     bookBorrower: {
-      type: String,
+      type: Schema.Types.ObjectId,
       required: true,
       enum: Object.values(itemBorrower),
     },

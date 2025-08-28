@@ -17,10 +17,7 @@ const startServer = async () => {
     })
     .catch((err) => {
       console.log(`Error: ${err}`);
-      process.on("uncaughtException", (err) => {
-        console.error(err.name, err.message);
-        process.exit(1);
-      });
+      process.exit(1);
     });
 };
 

@@ -82,15 +82,14 @@ const adminRegistration = asyncHandler(async (req, res) => {
 });
 
 const adminLogin = asyncHandler(async (req, res) => {
-  const { name, phone, pswrd } = req.body;
+  const { phone, pswrd } = req.body;
   // console.log(req.body);
   const userExitence = await User.findOne({
-    name: name,
     phoneNo: phone,
   });
   if (!userExitence) throw new Error("User not found");
   if (userExitence.role !== "admin") throw new Error("Access Denied");
-  if (userExitence.name !== name || !pswrd || typeof pswrd !== "string") {
+  if (!pswrd || typeof pswrd !== "string") {
     throw new Error("Invalid credentials");
   }
 

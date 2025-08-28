@@ -20,7 +20,7 @@ const registration = asyncHandler(async (req, res) => {
     return res.status(403).json({ message: "Role tampering detected." });
 
   const existedUser = await User.findOne({
-    $and: [{ name }, { phoneNo }],
+    $and: [{ phoneNo }],
   });
 
   if (existedUser) throw new Error("Registration is already done");
@@ -83,9 +83,8 @@ const registration = asyncHandler(async (req, res) => {
 });
 
 const logIn = asyncHandler(async (req, res) => {
-  const { name, phone, pswrd } = req.body;
+  const { phone, pswrd } = req.body;
   const userExitence = await User.findOne({
-    name: name,
     phoneNo: phone,
   });
 
@@ -95,10 +94,8 @@ const logIn = asyncHandler(async (req, res) => {
 
   if (userExitence.role !== "user")
     throw new Error("Access denied: Only users can access this login");
-  console.log(userExitence.name);
-  console.log(userExitence.phoneNo);
 
-  if (userExitence.name !== name || userExitence.phoneNo !== phone || !pswrd)
+  if (userExitence.phoneNo !== phone || !pswrd)
     throw new Error("Invalid credentials");
 
   const isPasswordCorrect = await userExitence.isPswrdCorrect(pswrd);
@@ -133,7 +130,6 @@ const logIn = asyncHandler(async (req, res) => {
 });
 
 const logOut = asyncHandler(async (req, res) => {
-  // console.log("req.user?._id", req.user?._id);
   await User.findByIdAndUpdate(
     req.user?._id,
     {
@@ -145,7 +141,6 @@ const logOut = asyncHandler(async (req, res) => {
       new: true,
     }
   );
-  // console.log("result", result);
   return res
     .status(201)
     .clearCookie("accessToken", {

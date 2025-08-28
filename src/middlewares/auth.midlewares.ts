@@ -31,7 +31,8 @@ export const authorizeMiddlware = function (...role: Array<string>) {
     async (req: Request, res: Response, next: NextFunction) => {
       const allowedRoles = req.user?.role as string;
       console.log(allowedRoles);
-      if (!role.includes(allowedRoles)) next(new Error("Access denied"));
+      console.log(req.user);
+      if (!role.includes(allowedRoles)) next(new Error("2. Access denied"));
       next();
     }
   );
